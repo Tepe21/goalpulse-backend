@@ -70,6 +70,20 @@ app.get("/search-match", async (req, res) => {
     res.status(500).json({ error: "Search error" });
   }
 });
+app.get("/match-stats/:fixtureId", async (req, res) => {
+  try {
+    const fixtureId = req.params.fixtureId;
+
+    const stats = await apiGet("/fixtures/statistics", {
+      fixture: fixtureId
+    });
+
+    res.json({ stats });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Stats error" });
+  }
+});
 
 
 const PORT = process.env.PORT || 10000;
