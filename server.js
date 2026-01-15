@@ -35,6 +35,18 @@ app.get("/test-redis", async (req, res) => {
     res.status(500).json({ error: "Redis not working" });
   }
 });
+app.get("/live-matches", async (req, res) => {
+  try {
+    const data = await redis.get("live_matches");
+    if (!data) return res.json({ matches: [] });
+
+    const matches = JSON.parse(data);
+    res.json({ matchesCount: matches.length, matches });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Cannot read live matches" });
+  }
+});
 
 
 const PORT = process.env.PORT || 10000;
