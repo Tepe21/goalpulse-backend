@@ -1,8 +1,8 @@
 import { apiGet } from "./apiFootball.js";
 import redis from "./redis.js";
 
-const LEAGUE_ID = 135;   // Serie A
-const SEASON = 2023;     // Σεζόν
+const LEAGUE_ID = 135;
+const SEASON = 2023;
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -10,7 +10,7 @@ function sleep(ms) {
 
 async function buildDataset() {
   try {
-    console.log("📦 Building AI dataset...");
+    console.log("Building AI dataset...");
 
     const fixtures = await apiGet("/fixtures", {
       league: LEAGUE_ID,
@@ -22,7 +22,6 @@ async function buildDataset() {
     const dataset = [];
 
     for (const match of fixtures) {
-      // Μόνο τελειωμένοι αγώνες
       if (match.fixture.status.short !== "FT") continue;
 
       const fixtureId = match.fixture.id;
@@ -47,7 +46,7 @@ async function buildDataset() {
       };
 
       const feature = {
-        fixtureId,
+        fixtureId: fixtureId,
         league: LEAGUE_ID,
         season: SEASON,
 
@@ -63,19 +62,15 @@ async function buildDataset() {
         homeXG: getStat(homeStats, "Expected Goals"),
         awayXG: getStat(awayStats, "Expected Goals"),
 
-        // Label: μπήκε τουλάχιστον 1 γκολ στο 2ο ημίχρονο
         goalAfter60: (match.goals.home + match.goals.away >= 2) ? 1 : 0
       };
 
       dataset.push(feature);
-
-      // ⏳ μικρό delay για να μην βαράμε rate limit
       await sleep(350);
     }
 
     await redis.set("ai_dataset", JSON.stringify(dataset));
-
-    console.log("✅ Dataset stored. Rows:", dataset.length);
+    console.log("AI dataset stored. Rows:", dataset.length);
 
   } catch (err) {
     console.error("AI Data Builder error:", err.message);
