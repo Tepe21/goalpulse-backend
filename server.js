@@ -1,3 +1,4 @@
+import "./aiDataBuilder.js";
 import "./liveWorker.js";
 import "./alertsWorker.js";
 import redis from "./redis.js";
