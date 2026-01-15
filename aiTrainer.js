@@ -2,7 +2,7 @@ import * as tf from "@tensorflow/tfjs-node";
 import redis from "./redis.js";
 
 async function trainModel() {
-  console.log("🧠 Training AI model...");
+  console.log("Training AI model...");
 
   const data = await redis.get("ai_dataset");
   if (!data) {
@@ -12,7 +12,6 @@ async function trainModel() {
 
   const dataset = JSON.parse(data);
 
-  // Features και labels
   const xs = dataset.map(d => [
     d.homeDanger,
     d.awayDanger,
@@ -29,7 +28,6 @@ async function trainModel() {
   const X = tf.tensor2d(xs);
   const Y = tf.tensor2d(ys);
 
-  // Μοντέλο
   const model = tf.sequential();
   model.add(tf.layers.dense({ units: 16, activation: "relu", inputShape: [8] }));
   model.add(tf.layers.dense({ units: 8, activation: "relu" }));
@@ -42,17 +40,15 @@ async function trainModel() {
   });
 
   await model.fit(X, Y, {
-    epochs: 50,
+    epochs: 40,
     batchSize: 32,
-    shuffle: true,
-    verbose: 1
+    shuffle: true
   });
 
-  // Αποθήκευση model στο Redis
   const modelJson = await model.toJSON();
   await redis.set("ai_model", JSON.stringify(modelJson));
 
-  console.log("✅ AI model trained and stored");
+  console.log("AI model trained and stored");
 }
 
 trainModel();
