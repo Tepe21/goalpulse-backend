@@ -47,6 +47,29 @@ app.get("/live-matches", async (req, res) => {
     res.status(500).json({ error: "Cannot read live matches" });
   }
 });
+app.get("/search-match", async (req, res) => {
+  try {
+    const query = req.query.q?.toLowerCase();
+    if (!query) return res.json({ error: "No query" });
+
+    const data = await redis.get("live_matches");
+    if (!data) return res.json({ matches: [] });
+
+    const matches = JSON.parse(data);
+
+    const filtered = matches.filter(m => {
+      const home = m.teams.home.name.toLowerCase();
+      const away = m.teams.away.name.toLowerCase();
+      const search = `${home} vs ${away}`;
+      return search.includes(query);
+    });
+
+    res.json({ results: filtered });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Search error" });
+  }
+});
 
 
 const PORT = process.env.PORT || 10000;
