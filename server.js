@@ -1,3 +1,5 @@
+import "./liveWorker.js";
+import "./alertsWorker.js";
 import redis from "./redis.js";
 import express from "express";
 import cors from "cors";
