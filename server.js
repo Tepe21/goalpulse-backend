@@ -1,3 +1,4 @@
+import "./aiTrainer.js";
 import "./aiDataBuilder.js";
 if (process.env.RUN_WORKERS === "true") {
   import("./liveWorker.js");
