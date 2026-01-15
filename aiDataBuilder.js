@@ -4,6 +4,10 @@ import redis from "./redis.js";
 // Θα χτίσουμε dataset για ένα πρωτάθλημα (π.χ. Serie A)
 const LEAGUE_ID = 135;   // Serie A
 const SEASON = 2023;     // Σεζόν
+// helper delay
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 async function buildDataset() {
   try {
@@ -28,6 +32,20 @@ async function buildDataset() {
       const stats = await apiGet("/fixtures/statistics", {
         fixture: fixtureId
       });
+for (const match of fixtures) {
+  ...
+
+  const stats = await apiGet("/fixtures/statistics", {
+    fixture: fixtureId
+  });
+
+  ...
+  
+  dataset.push(feature);
+
+  // ⏳ delay 300ms ανά request
+  await sleep(300);
+}
 
       if (!stats || stats.length === 0) continue;
 
