@@ -1,10 +1,9 @@
 import { apiGet } from "./apiFootball.js";
 import redis from "./redis.js";
 
-// Θα χτίσουμε dataset για ένα πρωτάθλημα (π.χ. Serie A)
 const LEAGUE_ID = 135;   // Serie A
 const SEASON = 2023;     // Σεζόν
-// helper delay
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -13,7 +12,6 @@ async function buildDataset() {
   try {
     console.log("📦 Building AI dataset...");
 
-    // 1) Παίρνουμε όλα τα fixtures της σεζόν
     const fixtures = await apiGet("/fixtures", {
       league: LEAGUE_ID,
       season: SEASON
@@ -23,29 +21,15 @@ async function buildDataset() {
 
     const dataset = [];
 
-    // 2) Για κάθε αγώνα παίρνουμε στατιστικά
     for (const match of fixtures) {
-      if (match.fixture.status.short !== "FT") continue; // μόνο τελειωμένοι
+      // Μόνο τελειωμένοι αγώνες
+      if (match.fixture.status.short !== "FT") continue;
 
       const fixtureId = match.fixture.id;
 
       const stats = await apiGet("/fixtures/statistics", {
         fixture: fixtureId
       });
-for (const match of fixtures) {
-  ...
-
-  const stats = await apiGet("/fixtures/statistics", {
-    fixture: fixtureId
-  });
-
-  ...
-  
-  dataset.push(feature);
-
-  // ⏳ delay 300ms ανά request
-  await sleep(300);
-}
 
       if (!stats || stats.length === 0) continue;
 
@@ -62,7 +46,6 @@ for (const match of fixtures) {
         return stat ? parseInt(stat.value) || 0 : 0;
       };
 
-      // --- Features ---
       const feature = {
         fixtureId,
         league: LEAGUE_ID,
@@ -80,23 +63,23 @@ for (const match of fixtures) {
         homeXG: getStat(homeStats, "Expected Goals"),
         awayXG: getStat(awayStats, "Expected Goals"),
 
-        // --- Label ---
-        // 1 αν μπήκε γκολ μετά το 60', 0 αν όχι
-        goalAfter60:
-          match.goals.home + match.goals.away > 1 ? 1 : 0
+        // Label: μπήκε τουλάχιστον 1 γκολ στο 2ο ημίχρονο
+        goalAfter60: (match.goals.home + match.goals.away >= 2) ? 1 : 0
       };
 
       dataset.push(feature);
+
+      // ⏳ μικρό delay για να μην βαράμε rate limit
+      await sleep(350);
     }
 
-    // 3) Αποθήκευση dataset στο Redis
     await redis.set("ai_dataset", JSON.stringify(dataset));
 
     console.log("✅ Dataset stored. Rows:", dataset.length);
+
   } catch (err) {
     console.error("AI Data Builder error:", err.message);
   }
 }
 
-// Τρέχει μία φορά όταν ξεκινήσει
 buildDataset();
